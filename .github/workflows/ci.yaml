@@ -1,0 +1,25 @@
+name: Docker CI
+
+on:
+  push:
+    branches: [ "main", "feature/*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t my-test-app:${{ github.sha }} -f docker/Dockerfile .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'my-test-app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0' # Пока просто смотрим отчет, не роняем билд
+          severity: 'CRITICAL,HIGH'
